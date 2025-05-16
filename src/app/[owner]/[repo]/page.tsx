@@ -1935,11 +1935,6 @@ IMPORTANT:
       {!isLoading && wikiStructure && (
          <FloatingChatWindow
             repoInfo={repoInfo} // Pass necessary info for Ask component
-            provider={selectedProviderState}
-            model={selectedModelState}
-            isCustomModel={isCustomSelectedModelState}
-            customModel={customSelectedModelState}
-            language={language}
             conversationHistory={conversationHistory}
             currentResponseStream={currentChatStream}
             isChatLoading={isChatLoading}

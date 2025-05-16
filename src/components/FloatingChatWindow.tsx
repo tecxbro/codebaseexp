@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import Ask from './Ask'; // Assuming Ask.tsx is in the same directory
-import Markdown from './Markdown';
-import { FaTimes, FaExpandArrowsAlt, FaCompressArrowsAlt } from 'react-icons/fa';
+import Ask from './Ask';
+import Markdown from './Markdown'; // Keep Markdown import
+import { FaExpandArrowsAlt, FaCompressArrowsAlt } from 'react-icons/fa'; // FaTimes removed
+import RepoInfo from '@/types/repoinfo'; // Import RepoInfo type
 
 // Ensure Message type is defined or imported if not globally available
 interface Message {
@@ -13,12 +14,13 @@ interface Message {
 }
 
 interface FloatingChatWindowProps {
-  repoInfo: any; // Pass repoInfo for Ask component
-  provider?: string;
-  model?: string;
-  isCustomModel?: boolean;
-  customModel?: string;
-  language?: string;
+  repoInfo: RepoInfo; // Use specific RepoInfo type
+  // Unused props removed:
+  // provider?: string;
+  // model?: string;
+  // isCustomModel?: boolean;
+  // customModel?: string;
+  // language?: string;
 
   conversationHistory: Message[];
   currentResponseStream: string;
@@ -32,11 +34,12 @@ interface FloatingChatWindowProps {
 
 const FloatingChatWindow: React.FC<FloatingChatWindowProps> = ({
   repoInfo,
-  provider,
-  model,
-  isCustomModel,
-  customModel,
-  language,
+  // Unused props removed from destructuring:
+  // provider,
+  // model,
+  // isCustomModel,
+  // customModel,
+  // language,
   conversationHistory,
   currentResponseStream,
   isChatLoading,
