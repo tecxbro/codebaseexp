@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { FaArrowRight } from 'react-icons/fa';
-import Markdown from './Markdown';
+// import Markdown from './Markdown'; // REMOVED: Unused import
 import { useLanguage } from '@/contexts/LanguageContext';
 import RepoInfo from '@/types/repoinfo';
 // import getRepoUrl from '@/utils/getRepoUrl'; // Not used directly in Ask.tsx anymore
