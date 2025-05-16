@@ -13,12 +13,11 @@ import RepoInfo from '@/types/repoinfo';
 
 interface AskProps {
   repoInfo: RepoInfo; // Kept for context, now used for placeholder
-  provider?: string; // Kept for potential display or context
-  model?: string;    // Kept for potential display or context
-  isCustomModel?: boolean; // Kept for potential display or context
-  customModel?: string;  // Kept for potential display or context
-  language?: string; // Kept for i18n context
-  // onRef prop is fully removed as per previous decisions
+  // provider?: string; // REMOVED: No longer used
+  // model?: string;    // REMOVED: No longer used
+  // isCustomModel?: boolean; // REMOVED: No longer used
+  // customModel?: string;  // REMOVED: No longer used
+  // language?: string; // REMOVED: No longer used, useLanguage hook is used internally
 
   // Props from parent (RepoWikiPage)
   onAskSubmit: (questionText: string, isDeepResearch: boolean) => void;
@@ -31,12 +30,15 @@ interface AskProps {
 
 const Ask: React.FC<AskProps> = ({
   repoInfo, // Now used for placeholder
-  language = 'en', // Retained for messages
+  // language = 'en', // REMOVED
   onAskSubmit,
   onClear,
   isLoading,
   isExpanded, // Consuming the new prop name
-  // onEngage, // REMOVED
+  // provider, // REMOVED
+  // model, // REMOVED
+  // isCustomModel, // REMOVED
+  // customModel, // REMOVED
 }) => {
   const [question, setQuestion] = useState('');
   const [deepResearch, setDeepResearch] = useState(false);

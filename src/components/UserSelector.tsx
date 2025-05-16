@@ -71,40 +71,43 @@ export default function UserSelector({
   
   // Fetch model configurations from the backend
   useEffect(() => {
-    const fetchModelConfig = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const response = await fetch('/api/models/config');
-        
-        if (!response.ok) {
-          throw new Error(`Error fetching model configurations: ${response.status}`);
+    const fetchAndInitialize = async () => {
+      let currentModelConfig = modelConfig;
+      if (!currentModelConfig) {
+        try {
+          setIsLoading(true); // Set loading true before fetch
+          setError(null);
+          const response = await fetch('/api/models/config');
+          if (!response.ok) {
+            throw new Error(`Error fetching model configurations: ${response.status}`);
+          }
+          const data = await response.json();
+          setModelConfig(data);
+          currentModelConfig = data; // Use the fetched data
+        } catch (err) {
+          console.error('Failed to fetch model configurations:', err);
+          setError('Failed to load model configurations. Using default options.');
+          // No early return, let setIsLoading(false) be called in finally block of this path
+        } finally {
+          // setIsLoading(false); // Let the main finally handle this if fetch fails, or after init if succeeds
         }
-        
-        const data = await response.json();
-        setModelConfig(data);
-        
-        // Initialize provider and model with defaults from API if not already set
-        if (!provider && data.defaultProvider) {
-          setProvider(data.defaultProvider);
-          
-          // Find the default provider and set its default model
-          const selectedProvider = data.providers.find((p: Provider) => p.id === data.defaultProvider);
-          if (selectedProvider && selectedProvider.models.length > 0) {
-            setModel(selectedProvider.models[0].id);
+      }
+
+      if (currentModelConfig) {
+        // Initialize provider and model with defaults from API if provider is not already set
+        if (!provider && currentModelConfig.defaultProvider) {
+          setProvider(currentModelConfig.defaultProvider);
+          const selectedProviderData = currentModelConfig.providers.find((p: Provider) => p.id === currentModelConfig.defaultProvider);
+          if (selectedProviderData && selectedProviderData.models.length > 0) {
+            setModel(selectedProviderData.models[0].id);
           }
         }
-      } catch (err) {
-        console.error('Failed to fetch model configurations:', err);
-        setError('Failed to load model configurations. Using default options.');
-      } finally {
-        setIsLoading(false);
       }
+      setIsLoading(false); // Set loading false after all operations (fetch or just init)
     };
-    
-    fetchModelConfig();
-  }, []); 
+
+    fetchAndInitialize();
+  }, [provider, setProvider, setModel, modelConfig]); // Added dependencies
   
   // Handler for changing provider
   const handleProviderChange = (newProvider: string) => {

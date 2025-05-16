@@ -137,11 +137,6 @@ const FloatingChatWindow: React.FC<FloatingChatWindowProps> = ({
       <div className={`p-2 ${isChatExpanded ? 'border-t border-[var(--border-color)]/30' : ''}`}>
         <Ask
           repoInfo={repoInfo}
-          provider={provider}
-          model={model}
-          isCustomModel={isCustomModel}
-          customModel={customModel}
-          language={language}
           onAskSubmit={onAskSubmit}
           onClear={onClearChat} // This should trigger onClearChat in parent, which then clears Ask's input via its own onClear
           isLoading={isChatLoading}

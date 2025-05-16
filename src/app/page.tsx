@@ -13,6 +13,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 // Define the demo mermaid charts outside the component (REMOVED as per previous steps and new design)
 
+// Define a more specific type for nested message objects
+type NestedMessages = string | { [key: string]: NestedMessages };
+
 const hardcodedRepos = [
   { id: 'add-repo', type: 'add' },
   { id: 'vscode', name: 'microsoft / vscode', description: 'Visual Studio Code', stars: '170.1k', ghPath: 'microsoft/vscode' },
@@ -38,10 +41,10 @@ export default function Home() {
 
   const t = (key: string, params: Record<string, string | number> = {}): string => {
     const keys = key.split('.');
-    let value: any = messages;
+    let value: NestedMessages = messages; // Use the more specific type
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+        value = value[k] as NestedMessages; // Assert type after access
       } else {
         const defaultText = params?.default as string || key;
         return defaultText;
