@@ -63,7 +63,7 @@ fi\n\
 # Check for required environment variables\n\
 if [ -z "$OPENAI_API_KEY" ] || [ -z "$GOOGLE_API_KEY" ]; then\n\
   echo "Warning: OPENAI_API_KEY and/or GOOGLE_API_KEY environment variables are not set."\n\
-  echo "These are required for DeepWiki to function properly."\n\
+  echo "These are required for SLIME to function properly."\n\
   echo "You can provide them via a mounted .env file or as environment variables when running the container."\n\
 fi\n\
 \n\
@@ -82,4 +82,29 @@ ENV SERVER_BASE_URL=http://localhost:${PORT:-8001}
 RUN touch .env
 
 # Command to run the application
+CMD ["/app/start.sh"]
+
+RUN echo "-----------------------------------------------------"\n\
+    echo "Required environment variables:"\n\
+    echo "  GOOGLE_API_KEY (for Google Gemini models)"\n\
+    echo "  OPENAI_API_KEY (for OpenAI models and embeddings)"\n\
+    echo "  OPENROUTER_API_KEY (for OpenRouter models)"\n\
+    echo "These are required for SLIME to function properly."\n\
+    echo "-----------------------------------------------------\n" > /app/env_help.txt
+
+RUN echo "Verifying existence of Ollama config directory: ${SLIME_CONFIG_DIR}" && \
+    if [ ! -d "${SLIME_CONFIG_DIR}" ]; then \
+        echo "Warning: ${SLIME_CONFIG_DIR} does not exist. Creating it." && \
+        mkdir -p "${SLIME_CONFIG_DIR}"; \
+    else \
+        echo "${SLIME_CONFIG_DIR} already exists."; \
+    fi && \
+    echo "SLIME_CONFIG_DIR is set to: ${SLIME_CONFIG_DIR}" && \
+    if [ -z "${OLLAMA_HOST}" ] || [ -z "${OLLAMA_PORT}" ]; then \
+    echo "Warning: OLLAMA_HOST or OLLAMA_PORT is not set."\n\
+    echo "These are required for SLIME to function properly."\n\
+    echo "Please ensure these environment variables are correctly configured in your environment or .env file."; \
+    fi
+
+# Default command to run the API with Uvicorn
 CMD ["/app/start.sh"]

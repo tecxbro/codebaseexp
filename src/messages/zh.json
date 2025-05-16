@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "DeepWiki-Open",
+    "appName": "SLIME",
     "tagline": "AI驱动的文档",
     "generateWiki": "生成Wiki",
     "processing": "处理中...",
@@ -8,7 +8,11 @@
     "submit": "提交",
     "cancel": "取消",
     "close": "关闭",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "welcome": "欢迎使用SLIME",
+    "description": "输入 GitHub、GitLab 或 Bitbucket 存储库 URL，或本地文件夹路径，以生成 Wiki。",
+    "getStarted": "开始",
+    "viewDemo": "查看演示"
   },
   "loading": {
     "initializing": "初始化Wiki生成...",
@@ -18,13 +22,11 @@
     "preparingDownload": "请等待，我们正在准备您的下载..."
   },
   "home": {
-    "welcome": "欢迎使用DeepWiki",
     "welcomeTagline": "为代码仓库提供AI驱动的文档",
-    "description": "只需一次点击，即可从GitHub、GitLab或Bitbucket仓库生成全面的文档。",
     "quickStart": "快速开始",
     "enterRepoUrl": "请以下列格式之一输入仓库URL：",
     "advancedVisualization": "使用Mermaid图表进行高级可视化",
-    "diagramDescription": "DeepWiki自动生成交互式图表，帮助您理解代码结构和关系：",
+    "diagramDescription": "SLIME自动生成交互式图表，帮助您理解代码结构和关系：",
     "flowDiagram": "流程图",
     "sequenceDiagram": "序列图"
   },
@@ -82,7 +84,7 @@
     "viewDefault": "查看默认配置"
   },
   "footer": {
-    "copyright": "DeepWiki - 为代码仓库提供AI驱动的文档"
+    "copyright": "SLIME - 为代码仓库提供AI驱动的文档"
   },
   "ask": {
     "placeholder": "询问关于此仓库的问题...",

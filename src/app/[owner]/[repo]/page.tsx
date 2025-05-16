@@ -44,6 +44,12 @@ interface WikiStructure {
   rootSections: string[];
 }
 
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 // Add CSS styles for wiki with Japanese aesthetic
 const wikiStyles = `
   .prose code {
@@ -164,6 +170,7 @@ const createBitbucketHeaders = (bitbucketToken: string): HeadersInit => {
   return headers;
 };
 
+import FloatingChatWindow from '@/components/FloatingChatWindow'; // Import the new component
 
 export default function RepoWikiPage() {
   // Get route parameters and search params
@@ -179,8 +186,8 @@ export default function RepoWikiPage() {
   const repoType = searchParams.get('type') || 'github';
   const localPath = searchParams.get('local_path') ? decodeURIComponent(searchParams.get('local_path') || '') : undefined;
   const repoUrl = searchParams.get('repo_url') ? decodeURIComponent(searchParams.get('repo_url') || '') : undefined;
-  const providerParam = searchParams.get('provider') || '';
-  const modelParam = searchParams.get('model') || '';
+  const providerParam = searchParams.get('provider') || 'google'; // Default to Google
+  const modelParam = searchParams.get('model') || 'gemini-2.0-flash'; // Default to Gemini 2.0 Flash
   const isCustomModelParam = searchParams.get('is_custom_model') === 'true';
   const customModelParam = searchParams.get('custom_model') || '';
   const language = searchParams.get('language') || 'en';
@@ -239,9 +246,19 @@ export default function RepoWikiPage() {
   // Create a flag to ensure the effect only runs once
   const effectRan = React.useRef(false);
 
-  // State for Ask modal
-  const [isAskModalOpen, setIsAskModalOpen] = useState(false);
-  const askComponentRef = useRef<{ clearConversation: () => void } | null>(null);
+  // State for Ask modal - TO BE REMOVED
+  // const [isAskModalOpen, setIsAskModalOpen] = useState(false);
+  // const askComponentRef = useRef<{ clearConversation: () => void } | null>(null);
+
+  // Placeholder state for Ask component props in the modal - TO BE REMOVED
+  // const [chatCurrentResponseStream, setChatCurrentResponseStream] = useState('');
+  // const [isChatLoadingState, setIsChatLoadingState] = useState(false);
+
+  // New state for Floating Chat Interface
+  const [conversationHistory, setConversationHistory] = useState<Message[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [currentChatStream, setCurrentChatStream] = useState(''); // Renamed to avoid confusion with removed modal state
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
 
   // Memoize repo info to avoid triggering updates in callbacks
 
@@ -253,6 +270,68 @@ export default function RepoWikiPage() {
       wikiContent.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentPageId]);
+
+  // Handlers for Ask component props in the modal - TO BE REMOVED
+  /*
+  const handleAskSubmitInModal = useCallback(async (question: string, isDeepResearch: boolean) => {
+    console.log("Ask submitted (modal):", { question, isDeepResearch });
+    setIsChatLoadingState(true);
+    setChatCurrentResponseStream(''); // Clear previous stream
+
+    const requestBody = {
+      repo_url: getRepoUrl(repoInfo),
+      type: repoInfo.type,
+      token: token || null,
+      messages: [{ role: 'user', content: `${isDeepResearch ? '[DEEP RESEARCH]\n' : ''}${question}` }],
+      provider: selectedProviderState,
+      model: selectedModelState,
+      is_custom_model: isCustomSelectedModelState,
+      custom_model: customSelectedModelState,
+      language: language,
+    };
+
+    try {
+      const response = await fetch(`/api/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error: ${response.status} ${errorText}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      if (reader) {
+        let accumulatedResponse = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulatedResponse += decoder.decode(value, { stream: true });
+          setChatCurrentResponseStream(accumulatedResponse);
+        }
+        // Ensure final part is decoded if stream ends abruptly
+        const finalChunk = decoder.decode();
+        if (finalChunk) {
+            accumulatedResponse += finalChunk;
+            setChatCurrentResponseStream(accumulatedResponse);
+        }
+      }
+    } catch (error) {
+      console.error("Error in modal ask submit:", error);
+      setChatCurrentResponseStream(error instanceof Error ? error.message : 'Error fetching response.');
+    } finally {
+      setIsChatLoadingState(false);
+    }
+  }, [repoInfo, token, selectedProviderState, selectedModelState, isCustomSelectedModelState, customSelectedModelState, language]);
+
+  const handleChatClearInModal = useCallback(() => {
+    console.log("Clear chat (modal)");
+    setChatCurrentResponseStream('');
+  }, []);
+  */
 
   // Generate content for a wiki page
   const generatePageContent = useCallback(async (page: WikiPage, owner: string, repo: string) => {
@@ -302,35 +381,42 @@ export default function RepoWikiPage() {
 
         // Create the prompt content - simplified to avoid message dialogs
  const promptContent =
-`You are an expert technical writer and software architect.
-Your task is to generate a comprehensive and accurate technical wiki page in Markdown format about a specific feature, system, or module within a given software project.
+`You are a FREINDLY and story based and humour senior senior developer who loves teaching newcomers. 
+Your task is to wrtie **beginner friendly** and **story like flow(motivation → use-case → walk-through → transition to next chapter) ** and **humorous** chapter pages.
 
 You will be given:
-1. The "[WIKI_PAGE_TOPIC]" for the page you need to create.
-2. A list of "[RELEVANT_SOURCE_FILES]" from the project that you MUST use as the sole basis for the content. You have access to the full content of these files. You MUST use AT LEAST 5 relevant source files for comprehensive coverage - if fewer are provided, search for additional related files in the codebase.
+1. The "[CHAPTER_TOPIC]" for the page you need to create.
+2. **[RELEVANT_SOURCE_FILES]** – project files you must rely on. Aim to reference about five distinct files for breadth; using fewer is fine if only a small set is relevant.
 
 CRITICAL STARTING INSTRUCTION:
-The very first thing on the page MUST be a \`<details>\` block listing ALL the \`[RELEVANT_SOURCE_FILES]\` you used to generate the content. There MUST be AT LEAST 5 source files listed - if fewer were provided, you MUST find additional related files to include.
+The very first thing on the page MUST be a \`<details>\` block listing ALL the \`[RELEVANT_SOURCE_FILES]\` you used to generate the content. you must aim for 5 files but if you can't find 5, aim for as many as you can find.
+
 Format it exactly like this:
 <details>
 <summary>Relevant source files</summary>
 
-The following files were used as context for generating this wiki page:
+The following files were used as context for generating this chapter:
 
 ${filePaths.map(path => `- [${path}](${path})`).join('\n')}
-<!-- Add additional relevant files if fewer than 5 were provided -->
+
 </details>
 
 Immediately after the \`<details>\` block, the main title of the page should be a H1 Markdown heading: \`# ${page.title}\`.
 
-Based ONLY on the content of the \`[RELEVANT_SOURCE_FILES]\`:
+Body - Follow this outline: - 
 
 1.  **Introduction:** Start with a concise introduction (1-2 paragraphs) explaining the purpose, scope, and high-level overview of "${page.title}" within the context of the overall project. If relevant, and if information is available in the provided files, link to other potential wiki pages using the format \`[Link Text](#page-anchor-or-id)\`.
 
-2.  **Detailed Sections:** Break down "${page.title}" into logical sections using H2 (\`##\`) and H3 (\`###\`) Markdown headings. For each section:
-    *   Explain the architecture, components, data flow, or logic relevant to the section's focus, as evidenced in the source files.
-    *   Identify key functions, classes, data structures, API endpoints, or configuration elements pertinent to that section.
+2. If this is not the first chapter, begin with a brief transition from the previous chapter. 
 
+
+**Detailed Sections:** Break down "${page.title}" into logical sections using H2 (\`##\`) and H3 (\`###\`) Markdown headings. For each section:
+    *   Begin with a high-level motivation explaining what problem this abstraction solves. Keep the analogy friendly and talk about the concrete scenerio the topic solves. Keep the tone warm and like a story. Make it very minimal and friendly to beginners.
+    *   High level flow of the chapter - a short narrative of how the topic fits the the project; include **one Mermaid diagram** to visually represent the flow of the chapter. Cite the sources below the diagram.
+    *   Each code block should be BELOW 10 lines! If longer code blocks are needed, break them down into smaller pieces and walk through them one-by-one. Aggresively simplify the code to make it minimal. Use comments to skip to non importanrt implemtation details. Each code block should have a beginner friendly explanation right after it. 
+    *   Internal Walk-throughs - Step by step "what happens under the hood" Add a **Mermaid diagram** Cite key files under the diagram. 
+    *   Then dive deeper into code for the internal implementation with references to files. Provide example code blocks, but make them similarly simple and beginner-friendly.
+    *   Transition to the next chapter with a brief summary and a link to the next chapter.
 3.  **Mermaid Diagrams:**
     *   EXTENSIVELY use Mermaid diagrams (e.g., \`flowchart TD\`, \`sequenceDiagram\`, \`classDiagram\`, \`erDiagram\`, \`graph TD\`) to visually represent architectures, flows, relationships, and schemas found in the source files.
     *   Ensure diagrams are accurate and directly derived from information in the \`[RELEVANT_SOURCE_FILES]\`.
@@ -370,7 +456,7 @@ Based ONLY on the content of the \`[RELEVANT_SOURCE_FILES]\`:
 
 7.  **Technical Accuracy:** All information must be derived SOLELY from the \`[RELEVANT_SOURCE_FILES]\`. Do not infer, invent, or use external knowledge about similar systems or common practices unless it's directly supported by the provided code. If information is not present in the provided files, do not include it or explicitly state its absence if crucial to the topic.
 
-8.  **Clarity and Conciseness:** Use clear, professional, and concise technical language suitable for other developers working on or learning about the project. Avoid unnecessary jargon, but use correct technical terms where appropriate.
+8.  **Language** Use the language that is completley beginner friendly, the chapter should be like a story.
 
 9.  **Conclusion/Summary:** End with a brief summary paragraph if appropriate for "${page.title}", reiterating the key aspects covered and their significance within the project.
 
@@ -384,7 +470,7 @@ IMPORTANT: Generate the content in ${language === 'en' ? 'English' :
 Remember:
 - Ground every claim in the provided source files.
 - Prioritize accuracy and direct representation of the code's functionality and structure.
-- Structure the document logically for easy understanding by other developers.
+- Structure the document logically for beginner friendly story like flow.
 `;
 
         // Prepare request body
@@ -1311,10 +1397,9 @@ IMPORTANT:
   // Start wiki generation when component mounts
   useEffect(() => {
     if (effectRan.current === false) {
-      effectRan.current = true; // Set to true immediately to prevent re-entry due to StrictMode
+      effectRan.current = true; // Semicolon added
 
       const loadData = async () => {
-        // Try loading from server-side cache first
         setLoadingMessage(messages.loading?.fetchingCache || 'Checking for cached wiki...');
         try {
           const params = new URLSearchParams({
@@ -1327,27 +1412,21 @@ IMPORTANT:
           const response = await fetch(`/api/wiki_cache?${params.toString()}`);
 
           if (response.ok) {
-            const cachedData = await response.json(); // Returns null if no cache
+            const cachedData = await response.json();
             if (cachedData && cachedData.wiki_structure && cachedData.generated_pages && Object.keys(cachedData.generated_pages).length > 0) {
               console.log('Using server-cached wiki data');
-
-              // Ensure the cached structure has sections and rootSections
+              // ... (rest of cache processing logic from user's file) ...
               const cachedStructure = {
                 ...cachedData.wiki_structure,
                 sections: cachedData.wiki_structure.sections || [],
                 rootSections: cachedData.wiki_structure.rootSections || []
               };
 
-              // If sections or rootSections are missing, create intelligent ones based on page titles
               if (!cachedStructure.sections.length || !cachedStructure.rootSections.length) {
                 const pages = cachedStructure.pages;
                 const sections: WikiSection[] = [];
                 const rootSections: string[] = [];
-
-                // Group pages by common prefixes or categories
                 const pageClusters = new Map<string, WikiPage[]>();
-
-                // Define common categories that might appear in page titles
                 const categories = [
                   { id: 'overview', title: 'Overview', keywords: ['overview', 'introduction', 'about'] },
                   { id: 'architecture', title: 'Architecture', keywords: ['architecture', 'structure', 'design', 'system'] },
@@ -1359,21 +1438,13 @@ IMPORTANT:
                   { id: 'ui', title: 'User Interface', keywords: ['ui', 'interface', 'frontend', 'page'] },
                   { id: 'setup', title: 'Setup & Configuration', keywords: ['setup', 'config', 'installation', 'deploy'] }
                 ];
-
-                // Initialize clusters with empty arrays
                 categories.forEach(category => {
                   pageClusters.set(category.id, []);
                 });
-
-                // Add an "Other" category for pages that don't match any category
                 pageClusters.set('other', []);
-
-                // Assign pages to categories based on title keywords
                 pages.forEach((page: WikiPage) => {
                   const title = page.title.toLowerCase();
                   let assigned = false;
-
-                  // Try to find a matching category
                   for (const category of categories) {
                     if (category.keywords.some(keyword => title.includes(keyword))) {
                       pageClusters.get(category.id)?.push(page);
@@ -1381,19 +1452,14 @@ IMPORTANT:
                       break;
                     }
                   }
-
-                  // If no category matched, put in "Other"
                   if (!assigned) {
                     pageClusters.get('other')?.push(page);
                   }
                 });
-
-                // Create sections for non-empty categories
                 for (const [categoryId, categoryPages] of pageClusters.entries()) {
                   if (categoryPages.length > 0) {
                     const category = categories.find(c => c.id === categoryId) ||
                                     { id: categoryId, title: categoryId === 'other' ? 'Other' : categoryId.charAt(0).toUpperCase() + categoryId.slice(1) };
-
                     const sectionId = `section-${categoryId}`;
                     sections.push({
                       id: sectionId,
@@ -1401,48 +1467,28 @@ IMPORTANT:
                       pages: categoryPages.map((p: WikiPage) => p.id)
                     });
                     rootSections.push(sectionId);
-
-                    // Update page parentId
                     categoryPages.forEach((page: WikiPage) => {
                       page.parentId = sectionId;
                     });
                   }
                 }
-
-                // If we still have no sections (unlikely), fall back to importance-based grouping
                 if (sections.length === 0) {
                   const highImportancePages = pages.filter((p: WikiPage) => p.importance === 'high').map((p: WikiPage) => p.id);
                   const mediumImportancePages = pages.filter((p: WikiPage) => p.importance === 'medium').map((p: WikiPage) => p.id);
                   const lowImportancePages = pages.filter((p: WikiPage) => p.importance === 'low').map((p: WikiPage) => p.id);
-
                   if (highImportancePages.length > 0) {
-                    sections.push({
-                      id: 'section-high',
-                      title: 'Core Components',
-                      pages: highImportancePages
-                    });
+                    sections.push({ id: 'section-high', title: 'Core Components', pages: highImportancePages });
                     rootSections.push('section-high');
                   }
-
                   if (mediumImportancePages.length > 0) {
-                    sections.push({
-                      id: 'section-medium',
-                      title: 'Key Features',
-                      pages: mediumImportancePages
-                    });
+                    sections.push({ id: 'section-medium', title: 'Key Features', pages: mediumImportancePages });
                     rootSections.push('section-medium');
                   }
-
                   if (lowImportancePages.length > 0) {
-                    sections.push({
-                      id: 'section-low',
-                      title: 'Additional Information',
-                      pages: lowImportancePages
-                    });
+                    sections.push({ id: 'section-low', title: 'Additional Information', pages: lowImportancePages });
                     rootSections.push('section-low');
                   }
                 }
-
                 cachedStructure.sections = sections;
                 cachedStructure.rootSections = rootSections;
               }
@@ -1453,32 +1499,28 @@ IMPORTANT:
               setIsLoading(false);
               setLoadingMessage(undefined);
               cacheLoadedSuccessfully.current = true;
-              return; // Exit if cache is successfully loaded
+              return;
             } else {
               console.log('No valid wiki data in server cache or cache is empty.');
             }
           } else {
-            // Log error but proceed to fetch structure, as cache is optional
-            console.error('Error fetching wiki cache from server:', response.status, await response.text());
+            let errorText = 'Failed to fetch cache, unknown error.';
+            try {
+                errorText = await response.text();
+            } catch (e) {
+                console.error('Could not get error text from response:', e);
+            }
+            console.error('Error fetching wiki cache from server:', response.status, errorText);
           }
         } catch (error) {
           console.error('Error loading from server cache:', error);
-          // Proceed to fetch structure if cache loading fails
         }
-
-        // If we reached here, either there was no cache, it was invalid, or an error occurred
-        // Proceed to fetch repository structure
         fetchRepositoryStructure();
       };
-
-      loadData();
-
+      loadData(); // Semicolon added
     } else {
       console.log('Skipping duplicate repository fetch/cache check');
     }
-
-    // Clean up function for this effect is not strictly necessary for loadData,
-    // but keeping the main unmount cleanup in the other useEffect
   }, [repoInfo.owner, repoInfo.repo, repoInfo.type, language, fetchRepositoryStructure, messages.loading?.fetchingCache, isComprehensiveView]);
 
   // Save wiki to server-side cache when generation is complete
@@ -1545,6 +1587,87 @@ IMPORTANT:
 
   const [isModelSelectionModalOpen, setIsModelSelectionModalOpen] = useState(false);
 
+  // Handler for submitting a new question from FloatingChatWindow
+  const handleAskSubmit = useCallback(async (questionText: string, isDeepResearch: boolean) => {
+    setIsChatLoading(true);
+    setCurrentChatStream('');
+    if (!isChatExpanded) {
+      setIsChatExpanded(true); // Expand immediately on send if not already expanded
+    }
+    const newConversationHistory = [...conversationHistory, { id: `user-${Date.now()}`, role: 'user' as const, content: questionText }];
+    setConversationHistory(newConversationHistory);
+
+    const requestBody = {
+      repo_url: getRepoUrl(repoInfo),
+      type: repoInfo.type,
+      token: token || null, // Assuming token is available in this scope
+      messages: newConversationHistory.map(m => ({ role: m.role, content: m.content })), // Send full history
+      provider: selectedProviderState, // Assuming these are available in scope
+      model: selectedModelState,
+      is_custom_model: isCustomSelectedModelState,
+      custom_model: customSelectedModelState,
+      language: language, // Assuming this is available in scope
+      is_deep_research: isDeepResearch, // Add deep research flag to backend
+    };
+
+    try {
+      const response = await fetch(`/api/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Error fetching stream, no details.');
+        throw new Error(`API Error: ${response.status} ${errorText}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedResponse = "";
+
+      if (reader) {
+        // Expand now that we are getting a response - This can be removed if we expand on send
+        // if (!isChatExpanded) setIsChatExpanded(true); 
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          accumulatedResponse += chunk;
+          setCurrentChatStream(accumulatedResponse);
+        }
+        // Final decode call for any remaining data
+        const finalChunk = decoder.decode();
+        if (finalChunk) {
+          accumulatedResponse += finalChunk;
+          setCurrentChatStream(accumulatedResponse);
+        }
+      }
+      setConversationHistory(prev => [...prev, { id: `asst-${Date.now()}`, role: 'assistant' as const, content: accumulatedResponse }]);
+    } catch (error) {
+      console.error("Error fetching chat stream:", error);
+      setConversationHistory(prev => [...prev, { id: `err-${Date.now()}`, role: 'assistant' as const, content: error instanceof Error ? error.message : 'Sorry, an error occurred.'}]);
+    } finally {
+      setIsChatLoading(false);
+      setCurrentChatStream('');
+    }
+  }, [conversationHistory, repoInfo, token, selectedProviderState, selectedModelState, isCustomSelectedModelState, customSelectedModelState, language, isChatExpanded]);
+
+  // Handler for clearing the chat
+  const handleClearChat = useCallback(() => {
+    setConversationHistory([]);
+    setCurrentChatStream('');
+    setIsChatLoading(false);
+    setIsChatExpanded(false); // Optionally collapse on clear
+    // The Ask component inside FloatingChatWindow will clear its own input via its onClear prop
+  }, []);
+
+  // Handler for toggling chat expansion
+  const handleToggleExpansion = useCallback(() => {
+    setIsChatExpanded(prev => !prev);
+  }, []);
+
   return (
     <div className="h-screen paper-texture p-4 md:p-8 flex flex-col">
       <style>{wikiStyles}</style>
@@ -1556,6 +1679,8 @@ IMPORTANT:
               <FaHome /> {messages.repoPage?.home || 'Home'}
             </Link>
           </div>
+          {/* ThemeToggle moved here */}
+          <ThemeToggle />
         </div>
       </header>
 
@@ -1643,7 +1768,7 @@ IMPORTANT:
             </div>
           </div>
         ) : wikiStructure ? (
-          <div className="h-full overflow-y-auto flex flex-col lg:flex-row gap-4 w-full overflow-hidden bg-[var(--card-bg)] rounded-lg shadow-custom card-japanese">
+          <div className="h-full overflow-y-auto flex flex-col lg:flex-row gap-4 w-full overflow-hidden">
             {/* Wiki Navigation */}
             <div className="h-full w-full lg:w-[280px] xl:w-[320px] flex-shrink-0 bg-[var(--background)]/50 rounded-lg rounded-r-none p-5 border-b lg:border-b-0 lg:border-r border-[var(--border-color)] overflow-y-auto">
               <h3 className="text-lg font-bold text-[var(--foreground)] mb-3 font-serif">{wikiStructure.title}</h3>
@@ -1798,54 +1923,33 @@ IMPORTANT:
         ) : null}
       </main>
 
-      <footer className="max-w-[90%] xl:max-w-[1400px] mx-auto mt-8 flex flex-col gap-4 w-full">
-        <div className="flex justify-between items-center gap-4 text-center text-[var(--muted)] text-sm h-fit w-full bg-[var(--card-bg)] rounded-lg p-3 shadow-sm border border-[var(--border-color)]">
-          <p className="flex-1 font-serif">
-            {messages.footer?.copyright || 'DeepWiki - Generate Wiki from GitHub/Gitlab/Bitbucket repositories'}
-          </p>
-          <ThemeToggle />
-        </div>
-      </footer>
+      {/* Footer removed entirely */}
 
-      {/* Floating Chat Button */}
+      {/* Floating Chat Button - TO BE REMOVED */}
+      {/* ... (modal button commented out) ... */}
+
+      {/* Ask Modal - Always render but conditionally show/hide - TO BE REMOVED */}
+      {/* ... (modal itself commented out) ... */}
+
+      {/* Render Floating Chat Window */}
       {!isLoading && wikiStructure && (
-        <button
-          onClick={() => setIsAskModalOpen(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[var(--accent-primary)] text-white shadow-lg flex items-center justify-center hover:bg-[var(--accent-primary)]/90 transition-all z-50"
-          aria-label={messages.ask?.title || 'Ask about this repository'}
-        >
-          <FaComments className="text-xl" />
-        </button>
+         <FloatingChatWindow
+            repoInfo={repoInfo} // Pass necessary info for Ask component
+            provider={selectedProviderState}
+            model={selectedModelState}
+            isCustomModel={isCustomSelectedModelState}
+            customModel={customSelectedModelState}
+            language={language}
+            conversationHistory={conversationHistory}
+            currentResponseStream={currentChatStream}
+            isChatLoading={isChatLoading}
+            isChatExpanded={isChatExpanded}
+            onAskSubmit={handleAskSubmit}
+            onClearChat={handleClearChat}
+            onToggleExpansion={handleToggleExpansion}
+            // onClose={() => {}} // Placeholder if a close button is added later
+        />
       )}
-
-      {/* Ask Modal - Always render but conditionally show/hide */}
-      <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ${isAskModalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="bg-[var(--card-bg)] rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col">
-          <div className="flex items-center justify-end p-3 absolute top-0 right-0 z-10">
-            <button
-              onClick={() => {
-                // Just close the modal without clearing the conversation
-                setIsAskModalOpen(false);
-              }}
-              className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors bg-[var(--card-bg)]/80 rounded-full p-2"
-              aria-label="Close"
-            >
-              <FaTimes className="text-xl" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            <Ask
-              repoInfo={repoInfo}
-              provider={selectedProviderState}
-              model={selectedModelState}
-              isCustomModel={isCustomSelectedModelState}
-              customModel={customSelectedModelState}
-              language={language}
-              onRef={(ref) => (askComponentRef.current = ref)}
-            />
-          </div>
-        </div>
-      </div>
 
       <ModelSelectionModal
         isOpen={isModelSelectionModalOpen}

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "DeepWiki-Open",
+    "appName": "SLIME",
     "tagline": "Documentación impulsada por IA",
     "generateWiki": "Generar Wiki",
     "processing": "Procesando...",
@@ -8,7 +8,11 @@
     "submit": "Enviar",
     "cancel": "Cancelar",
     "close": "Cerrar",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "welcome": "Bienvenido a SLIME",
+    "description": "Ingrese la URL de un repositorio de GitHub, GitLab o Bitbucket, o una ruta de carpeta local, para generar un wiki.",
+    "getStarted": "Comenzar",
+    "viewDemo": "Ver demostración"
   },
   "loading": {
     "initializing": "Inicializando generación de wiki...",
@@ -18,13 +22,11 @@
     "preparingDownload": "Por favor espere mientras preparamos su descarga..."
   },
   "home": {
-    "welcome": "Bienvenido a DeepWiki",
     "welcomeTagline": "Documentación impulsada por IA para repositorios de código",
-    "description": "Genera documentación completa de repositorios GitHub, GitLab o Bitbucket con solo unos clics.",
     "quickStart": "Inicio Rápido",
     "enterRepoUrl": "Ingresa una URL de repositorio en uno de estos formatos:",
     "advancedVisualization": "Visualización Avanzada con Diagramas Mermaid",
-    "diagramDescription": "DeepWiki genera automáticamente diagramas interactivos para ayudarte a entender la estructura y relaciones del código:",
+    "diagramDescription": "SLIME genera automáticamente diagramas interactivos para ayudarte a entender la estructura y relaciones del código:",
     "flowDiagram": "Diagrama de Flujo",
     "sequenceDiagram": "Diagrama de Secuencia"
   },
@@ -82,7 +84,7 @@
     "viewDefault": "Ver Predeterminados"
   },
   "footer": {
-    "copyright": "DeepWiki - Documentación impulsada por IA para repositorios de código"
+    "copyright": "SLIME - Documentación impulsada por IA para repositorios de código"
   },
   "ask": {
     "placeholder": "Haz una pregunta sobre este repositorio...",

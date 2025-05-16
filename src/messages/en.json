@@ -1,14 +1,22 @@
 {
   "common": {
-    "appName": "DeepWiki-Open",
-    "tagline": "AI-powered documentation",
+    "appName": "SLIME",
+    "tagline": "AI-powered documentation for code repositories",
     "generateWiki": "Generate Wiki",
     "processing": "Processing...",
     "error": "Error",
-    "submit": "Submit",
+    "submitting": "Submitting...",
+    "success": "Success",
+    "copied": "Copied to clipboard!",
+    "copy": "Copy",
+    "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "welcome": "Welcome to SLIME",
+    "description": "Enter a GitHub, GitLab, or Bitbucket repository URL, or a local folder path, to generate a wiki.",
+    "getStarted": "Get Started",
+    "viewDemo": "View Demo"
   },
   "loading": {
     "initializing": "Initializing wiki generation...",
@@ -18,15 +26,9 @@
     "preparingDownload": "Please wait while we prepare your download..."
   },
   "home": {
-    "welcome": "Welcome to DeepWiki-Open",
-    "welcomeTagline": "AI-powered documentation for your code repositories",
-    "description": "Generate comprehensive documentation from GitHub, GitLab, or Bitbucket repositories with just a few clicks.",
-    "quickStart": "Quick Start",
-    "enterRepoUrl": "Enter a repository URL in one of these formats:",
-    "advancedVisualization": "Advanced Visualization with Mermaid Diagrams",
-    "diagramDescription": "DeepWiki automatically generates interactive diagrams to help you understand code structure and relationships:",
-    "flowDiagram": "Flow Diagram",
-    "sequenceDiagram": "Sequence Diagram"
+    "whichRepoQuestion": "Which repo would you like to understand?",
+    "searchPlaceholder": "Search for repositories (or paste a link)",
+    "addRepo": "Add repo"
   },
   "form": {
     "repository": "Repository",
@@ -79,10 +81,13 @@
     "changeModel": "Change Model",
     "defaultNote": "These defaults are already applied. Add your custom exclusions above.",
     "hideDefault": "Hide Default",
-    "viewDefault": "View Default"
+    "viewDefault": "View Default",
+    "error": {
+      "invalidRepo": "Invalid repository format. Use \"owner/repo\", a full Git URL, or local path."
+    }
   },
   "footer": {
-    "copyright": "DeepWiki - AI-powered documentation for code repositories"
+
   },
   "ask": {
     "placeholder": "Ask a question about this repository...",

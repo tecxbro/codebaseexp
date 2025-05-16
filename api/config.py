@@ -23,8 +23,11 @@ if GOOGLE_API_KEY:
 if OPENROUTER_API_KEY:
     os.environ["OPENROUTER_API_KEY"] = OPENROUTER_API_KEY
 
-# Get configuration directory from environment variable, or use default if not set
-CONFIG_DIR = os.environ.get('DEEPWIKI_CONFIG_DIR', None)
+# Attempt to get the config directory from an environment variable
+CONFIG_DIR = os.environ.get('SLIME_CONFIG_DIR', None)
+# If the environment variable is not set, use the default path relative to this file
+if CONFIG_DIR is None:
+    CONFIG_DIR = Path(__file__).parent / "config"
 
 # Client class mapping
 CLIENT_CLASSES = {

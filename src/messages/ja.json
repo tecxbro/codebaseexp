@@ -1,14 +1,18 @@
 {
   "common": {
-    "appName": "DeepWiki-Open",
-    "tagline": "AI駆動のドキュメンテーション",
+    "appName": "SLIME",
+    "tagline": "AIによるドキュメンテーション",
     "generateWiki": "Wikiを生成",
     "processing": "処理中...",
     "error": "エラー",
     "submit": "送信",
     "cancel": "キャンセル",
     "close": "閉じる",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "welcome": "SLIMEへようこそ",
+    "description": "GitHub、GitLab、またはBitbucketリポジトリのURL、またはローカルフォルダーのパスを入力して、wikiを生成します。",
+    "getStarted": "開始",
+    "viewDemo": "デモを見る"
   },
   "loading": {
     "initializing": "Wiki生成を初期化中...",
@@ -18,13 +22,11 @@
     "preparingDownload": "ダウンロードの準備中です..."
   },
   "home": {
-    "welcome": "DeepWikiへようこそ",
     "welcomeTagline": "コードリポジトリのためのAI駆動ドキュメンテーション",
-    "description": "GitHub、GitLab、またはBitbucketリポジトリから包括的なドキュメントを数クリックで生成します。",
     "quickStart": "クイックスタート",
     "enterRepoUrl": "以下のいずれかの形式でリポジトリURLを入力してください：",
     "advancedVisualization": "Mermaidダイアグラムによる高度な可視化",
-    "diagramDescription": "DeepWikiは、コード構造と関係を理解するのに役立つインタラクティブな図を自動的に生成します：",
+    "diagramDescription": "SLIMEは、コード構造と関係を理解するのに役立つインタラクティブな図を自動的に生成します：",
     "flowDiagram": "フロー図",
     "sequenceDiagram": "シーケンス図"
   },
@@ -82,7 +84,7 @@
     "viewDefault": "デフォルトを表示"
   },
   "footer": {
-    "copyright": "DeepWiki - コードリポジトリのためのAI駆動ドキュメンテーション"
+    "copyright": "SLIME - コードリポジトリのためのAI駆動ドキュメンテーション"
   },
   "ask": {
     "placeholder": "このリポジトリについて質問する...",

@@ -1,14 +1,18 @@
 {
   "common": {
-    "appName": "DeepWiki-Open",
-    "tagline": "Tài liệu hỗ trợ bởi AI",
+    "appName": "SLIME",
+    "tagline": "Tài liệu được hỗ trợ bởi AI",
     "generateWiki": "Tạo Wiki",
     "processing": "Đang xử lý...",
     "error": "Lỗi",
     "submit": "Gửi",
     "cancel": "Hủy",
     "close": "Đóng",
-    "loading": "Đang tải..."
+    "loading": "Đang tải...",
+    "welcome": "Chào mừng đến với SLIME",
+    "description": "Nhập URL repository GitHub, GitLab hoặc Bitbucket hoặc đường dẫn thư mục cục bộ để tạo wiki.",
+    "getStarted": "Bắt đầu",
+    "viewDemo": "Xem Demo"
   },
   "loading": {
     "initializing": "Đang khởi tạo wiki...",
@@ -18,13 +22,11 @@
     "preparingDownload": "Đang tải! Vui lòng chờ..."
   },
   "home": {
-    "welcome": "Chào mừng đến với DeepWiki-Open",
     "welcomeTagline": "Tài liệu hỗ trợ bởi AI cho các repository của bạn",
-    "description": "Tạo tài liệu từ các repository GitHub, GitLab, hoặc Bitbucket chỉ với vài cú nhấp chuột.",
     "quickStart": "Bắt đầu nhanh",
     "enterRepoUrl": "Nhập URL repository",
     "advancedVisualization": "Tùy chỉnh sơ đồ trực quan với Mermaid",
-    "diagramDescription": "DeepWiki tự động tạo các sơ đồ tương tác giúp bạn hiểu cấu trúc source codes và mối quan hệ giữa chúng:",
+    "diagramDescription": "SLIME tự động tạo các sơ đồ tương tác giúp bạn hiểu cấu trúc source codes và mối quan hệ giữa chúng:",
     "flowDiagram": "Sơ đồ luồng",
     "sequenceDiagram": "Sơ đồ tuần tự"
   },
@@ -82,7 +84,7 @@
     "viewDefault": "Xem mặc định"
   },
   "footer": {
-    "copyright": "DeepWiki - Tài liệu hỗ trợ bởi AI cho repository"
+    "copyright": "SLIME - Tài liệu hỗ trợ bởi AI cho repository"
   },
   "ask": {
     "placeholder": "Đặt một câu hỏi về repository này...",

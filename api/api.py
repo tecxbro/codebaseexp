@@ -304,8 +304,6 @@ def generate_markdown_export(repo_url: str, pages: List[WikiPage]) -> str:
         markdown += f"<a id='{page.id}'></a>\n\n"
         markdown += f"## {page.title}\n\n"
 
-
-
         # Add related pages
         if page.relatedPages and len(page.relatedPages) > 0:
             markdown += "### Related Pages\n\n"
@@ -362,7 +360,7 @@ os.makedirs(WIKI_CACHE_DIR, exist_ok=True)
 
 def get_wiki_cache_path(owner: str, repo: str, repo_type: str, language: str) -> str:
     """Generates the file path for a given wiki cache."""
-    filename = f"deepwiki_cache_{repo_type}_{owner}_{repo}_{language}.json"
+    filename = f"slime_cache_{repo_type}_{owner}_{repo}_{language}.json"
     return os.path.join(WIKI_CACHE_DIR, filename)
 
 async def read_wiki_cache(owner: str, repo: str, repo_type: str, language: str) -> Optional[WikiCacheData]:
@@ -380,8 +378,12 @@ async def read_wiki_cache(owner: str, repo: str, repo_type: str, language: str) 
 
 async def save_wiki_cache(data: WikiCacheRequest) -> bool:
     """Saves wiki cache data to the file system."""
-    cache_path = get_wiki_cache_path(data.owner, data.repo, data.repo_type, data.language)
-    logger.info(f"Attempting to save wiki cache. Path: {cache_path}")
+    cache_dir = os.path.join(WIKI_CACHE_DIR, data.owner, data.repo)
+    os.makedirs(cache_dir, exist_ok=True)
+    # Use the helper function for filename consistency
+    filename = get_wiki_cache_path(data.owner, data.repo, data.repo_type, data.language)
+    file_path = os.path.join(cache_dir, filename)
+    logger.info(f"Attempting to save wiki cache. Path: {file_path}")
     try:
         payload = WikiCacheData(
             wiki_structure=data.wiki_structure,
@@ -395,17 +397,16 @@ async def save_wiki_cache(data: WikiCacheRequest) -> bool:
         except Exception as ser_e:
             logger.warning(f"Could not serialize payload for size logging: {ser_e}")
 
-
-        logger.info(f"Writing cache file to: {cache_path}")
-        with open(cache_path, 'w', encoding='utf-8') as f:
+        logger.info(f"Writing cache file to: {file_path}")
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(payload.model_dump(), f, indent=2)
-        logger.info(f"Wiki cache successfully saved to {cache_path}")
+        logger.info(f"Wiki cache successfully saved to {file_path}")
         return True
     except IOError as e:
-        logger.error(f"IOError saving wiki cache to {cache_path}: {e.strerror} (errno: {e.errno})", exc_info=True)
+        logger.error(f"IOError saving wiki cache to {file_path}: {e.strerror} (errno: {e.errno})", exc_info=True)
         return False
     except Exception as e:
-        logger.error(f"Unexpected error saving wiki cache to {cache_path}: {e}", exc_info=True)
+        logger.error(f"Unexpected error saving wiki cache to {file_path}: {e}", exc_info=True)
         return False
 
 # --- Wiki Cache API Endpoints ---
@@ -453,19 +454,28 @@ async def delete_wiki_cache(
     Deletes a specific wiki cache from the file system.
     """
     logger.info(f"Attempting to delete wiki cache for {owner}/{repo} ({repo_type}), lang: {language}")
-    cache_path = get_wiki_cache_path(owner, repo, repo_type, language)
+    cache_dir = os.path.join(WIKI_CACHE_DIR, owner, repo)
 
-    if os.path.exists(cache_path):
-        try:
-            os.remove(cache_path)
-            logger.info(f"Successfully deleted wiki cache: {cache_path}")
-            return {"message": f"Wiki cache for {owner}/{repo} ({language}) deleted successfully"}
-        except Exception as e:
-            logger.error(f"Error deleting wiki cache {cache_path}: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to delete wiki cache: {str(e)}")
-    else:
-        logger.warning(f"Wiki cache not found, cannot delete: {cache_path}")
+    if not os.path.exists(cache_dir):
+        logger.warning(f"Wiki cache not found, cannot delete: {cache_dir}")
         raise HTTPException(status_code=404, detail="Wiki cache not found")
+
+    try:
+        # Use the helper function for filename consistency
+        filename_to_delete = get_wiki_cache_path(owner, repo, repo_type, language)
+        file_path_to_delete = os.path.join(cache_dir, filename_to_delete)
+
+        if os.path.exists(file_path_to_delete):
+            os.remove(file_path_to_delete)
+            logger.info(f"Successfully deleted wiki cache: {file_path_to_delete}")
+            return {"message": f"Wiki cache for {owner}/{repo} ({language}) deleted successfully"}
+        else:
+            logger.warning(f"Wiki cache not found, cannot delete: {file_path_to_delete}")
+            raise HTTPException(status_code=404, detail="Wiki cache not found")
+
+    except Exception as e:
+        logger.error(f"Error deleting wiki cache {file_path_to_delete}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete wiki cache: {str(e)}")
 
 @app.get("/")
 async def root():
@@ -493,7 +503,7 @@ async def root():
 async def get_processed_projects():
     """
     Lists all processed projects found in the wiki cache directory.
-    Projects are identified by files named like: deepwiki_cache_{repo_type}_{owner}_{repo}_{language}.json
+    Projects are identified by files named like: slime_cache_{repo_type}_{owner}_{repo}_{language}.json
     """
     project_entries: List[ProcessedProjectEntry] = []
     # WIKI_CACHE_DIR is already defined globally in the file
@@ -504,44 +514,58 @@ async def get_processed_projects():
             return []
 
         logger.info(f"Scanning for project cache files in: {WIKI_CACHE_DIR}")
-        filenames = await asyncio.to_thread(os.listdir, WIKI_CACHE_DIR) # Use asyncio.to_thread for os.listdir
+        cache_dir = os.path.join(WIKI_CACHE_DIR, "projects")
+        os.makedirs(cache_dir, exist_ok=True)
 
-        for filename in filenames:
-            if filename.startswith("deepwiki_cache_") and filename.endswith(".json"):
-                file_path = os.path.join(WIKI_CACHE_DIR, filename)
+        # Example filename: slime_cache_github_AsyncFuncAI_project_en.json
+        # Projects are identified by files named like: slime_cache_{repo_type}_{owner}_{repo}_{language}.json
+        projects = []
+        for filename in os.listdir(cache_dir):
+            if filename.startswith("slime_cache_") and filename.endswith(".json"):
+                file_path = os.path.join(cache_dir, filename)
                 try:
                     stats = await asyncio.to_thread(os.stat, file_path) # Use asyncio.to_thread for os.stat
-                    parts = filename.replace("deepwiki_cache_", "").replace(".json", "").split('_')
+                    parts = filename.replace("slime_cache_", "").replace(".json", "").split('_')
 
-                    # Expecting repo_type_owner_repo_language
-                    # Example: deepwiki_cache_github_AsyncFuncAI_deepwiki-open_en.json
-                    # parts = [github, AsyncFuncAI, deepwiki-open, en]
-                    if len(parts) >= 4:
-                        repo_type = parts[0]
-                        owner = parts[1]
-                        language = parts[-1] # language is the last part
-                        repo = "_".join(parts[2:-1]) # repo can contain underscores
+                    # Create a unique cache key based on repository info and language
+                    # Example: deepwiki_cache_github_AsyncFuncAI_RepoRover_en.json
+                    # parts = [github, AsyncFuncAI, RepoRover, en]
+                    # Example: slime_cache_github_AsyncFuncAI_project-name_en.json
+                    # parts = [github, AsyncFuncAI, project-name, en]
+                    cache_key_parts = [parts[0], parts[1], parts[2], parts[3]]
+                    if len(parts) > 4:
+                        cache_key_parts.append(parts[4])
+                    repo_type = parts[0]
+                    owner = parts[1]
+                    repo_name = "_".join(parts[1:])
 
-                        project_entries.append(
-                            ProcessedProjectEntry(
-                                id=filename,
-                                owner=owner,
-                                repo=repo,
-                                name=f"{owner}/{repo}",
-                                repo_type=repo_type,
-                                submittedAt=int(stats.st_mtime * 1000), # Convert to milliseconds
-                                language=language
-                            )
-                        )
-                    else:
-                        logger.warning(f"Could not parse project details from filename: {filename}")
+                    projects.append({
+                        "id": f"{repo_type}_{owner}_{repo_name}", # Unique ID
+                        "repo_type": repo_type,
+                        "owner": owner,
+                        "repo": repo_name,
+                        "cached_at": datetime.fromtimestamp(stats.st_ctime).isoformat()
+                    })
                 except Exception as e:
-                    logger.error(f"Error processing file {file_path}: {e}")
-                    continue # Skip this file on error
+                    logger.error(f"Error parsing cache filename {filename}: {e}")
 
         # Sort by most recent first
-        project_entries.sort(key=lambda p: p.submittedAt, reverse=True)
-        logger.info(f"Found {len(project_entries)} processed project entries.")
+        projects.sort(key=lambda p: p["cached_at"], reverse=True)
+        logger.info(f"Found {len(projects)} processed project entries.")
+
+        for project in projects:
+            project_entries.append(
+                ProcessedProjectEntry(
+                    id=project["id"],
+                    owner=project["owner"],
+                    repo=project["repo"],
+                    name=f"{project['owner']}/{project['repo']}",
+                    repo_type=project["repo_type"],
+                    submittedAt=int(project["cached_at"]),
+                    language=project["repo"].split('_')[-1]
+                )
+            )
+
         return project_entries
 
     except Exception as e:
