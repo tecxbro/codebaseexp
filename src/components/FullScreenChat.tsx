@@ -21,11 +21,11 @@ interface FullScreenChatProps {
   onAskSubmit: (questionText: string, isDeepResearch: boolean) => void;
   onClear: () => void;
   repoInfo: RepoInfo;
-  provider?: string;
-  model?: string;
-  isCustomModel?: boolean;
-  customModel?: string;
-  language?: string;
+  // provider?: string; // REMOVED
+  // model?: string; // REMOVED
+  // isCustomModel?: boolean; // REMOVED
+  // customModel?: string; // REMOVED
+  // language?: string; // REMOVED
 }
 
 const FullScreenChat: React.FC<FullScreenChatProps> = ({
@@ -36,11 +36,11 @@ const FullScreenChat: React.FC<FullScreenChatProps> = ({
   onAskSubmit,
   onClear,
   repoInfo,
-  provider,
-  model,
-  isCustomModel,
-  customModel,
-  language,
+  // provider, // REMOVED
+  // model, // REMOVED
+  // isCustomModel, // REMOVED
+  // customModel, // REMOVED
+  // language, // REMOVED
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -107,16 +107,16 @@ const FullScreenChat: React.FC<FullScreenChatProps> = ({
       <div className="p-0 border-t border-[var(--border-color)] bg-[var(--card-bg)]/80 rounded-b-lg">
          <Ask 
             repoInfo={repoInfo}
-            provider={provider}
-            model={model}
-            isCustomModel={isCustomModel}
-            customModel={customModel}
-            language={language}
+            // provider={provider} // REMOVED
+            // model={model} // REMOVED
+            // isCustomModel={isCustomModel} // REMOVED
+            // customModel={customModel} // REMOVED
+            // language={language} // REMOVED
             onAskSubmit={onAskSubmit}
             onClear={onClear} // This clear would be for the whole conversation
             isLoading={isLoading} 
-            currentResponseStream="" // FullScreenChat handles its own stream display
-            isFullScreenActive={true} // Tell Ask it's in full-screen mode
+            // currentResponseStream="" // REMOVED - Ask no longer takes this
+            isExpanded={true} // Use isExpanded instead of isFullScreenActive
          />
       </div>
     </div>
